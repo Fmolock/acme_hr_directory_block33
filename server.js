@@ -48,6 +48,23 @@ app.post('/api/employees', async(req, res, next)=>{
     }
 });
 
+app.put('/api/employees/:id', async(req, res, next)=>{
+    try{
+       const SQL = `
+            UPDATE employees
+            SET txt=$1, department_id=$2
+            WHERE id= $3
+            RETURNING *
+       `; 
+       const response = await client.query(SQL, [req.body.txt, req.body.department_id, req.params.id]);
+       res.send(response.rows[0]);
+       
+    }
+    catch(ex){
+        next(ex);
+    }
+});
+
 app.get('/api/departments', async(req, res, next)=>{
     try{
        const SQL = `
@@ -103,13 +120,16 @@ const init = async ()=>{
     await client.query(SQL);
     console.log('data seeded');
     const port = process.env.PORT || 3000;
-    app.listen(port, ()=> console.log(`listening on port ${port}`));
+    app.listen(port, ()=> {
+        console.log(`listening on port ${port}`)
+    });
     
     console.log('some curl commands to test');
     console.log('curl localhost:8080/api/employees');
     console.log('curl localhost:8080/api/departments');
     console.log('curl localhost:8080/api/employees/1 -X DELETE');
     console.log(`curl localhost:8080/api/employees -X POST -d '{"txt": "nu note", "department_id": 1}' -H 'Content-Type:application/json'`);
+    console.log(`curl localhost:8080/api/employees/1 -X PUT -d '{"txt": "updated note", "department_id": 1}' -H 'Content-Type:application/json'`);
 };
 
 init();
